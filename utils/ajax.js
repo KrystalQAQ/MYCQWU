@@ -12,7 +12,7 @@ instance.interceptors.request.use(
     // 在发送请求前做些什么
 
 	// config.header.post['Content-Type'] = 'application/x-www-form-urlencoded';
-    // console.log(config)
+    // console.log("请求",config.Cookies)
 	return config
   },
   error => {
@@ -25,7 +25,7 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   response => {
     // 对响应数据做些什么
-	// console.log(response)
+	// console.log(response,Cookies)
     return response
   },
   error => {

@@ -8,6 +8,8 @@ import {router,RouterMount} from './router.js'  //路径换成自己的
 Vue.use(router)
 Vue.config.productionTip = false
 App.mpType = 'app'
+import { install as http } from '@/uni_modules/gt-axios-request/js_sdk/install.js'
+Vue.use(http)
 const app = new Vue({
     ...App
 })
