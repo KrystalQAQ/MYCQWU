@@ -43,7 +43,8 @@
 	import {
 		balance,
 		qrcode,
-		createOrder
+		createOrder,
+		getlogin
 	} from '../../utils/api.js';
 
 
@@ -63,61 +64,81 @@
 				czz: ''
 			}
 		},
-		onLoad() {
-			this.ewm()
-			this.yue()
+		onReady() {
+			getlogin().then(res => {
+				// console.log("eee", res)
+				if (res.indexOf('您还可以使用以下方式登录') != "-1") {
+					console.log("请先登录")
+					// this.show = false
+					this.$refs.uNotify.primary('请先登录~')
+					uni.redirectTo({
+						url: 'pages/login/login'
+					});
+
+				}else{
+					this.ewm()
+					this.yue()
+				}
+				// 	// return new Promise(() => {})
+
+			})
+	
 		},
 		methods: {
-			 cz() {
+			cz() {
 
-						uni.request({
-							url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
+				// uni.request({
+				// 	url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
 
-							method: "GET",
-							// header: {
-							// 	"Content-Type": "application/x-www-form-urlencoded",
-							// 	"Referer": " http://pay.cqwu.edu.cn",
-							// },
-							// data: qs.stringify(tx),
-							success: (res) => {
-								// console.log("yanz", res.data)
-							}
-						});
-						var cs = {
-							'payAmt': this.total,
-							'payProjectId': '2',
-							'factorycode': 'Z007',
-							'rechargeType': '1',
-							'recharge_idserial': ''
+				// 	method: "GET",
+				// 	// header: {
+				// 	// 	"Content-Type": "application/x-www-form-urlencoded",
+				// 	// 	"Referer": " http://pay.cqwu.edu.cn",
+				// 	// },
+				// 	// data: qs.stringify(tx),
+				// 	success: (res) => {
+				// 		// console.log("yanz", res.data)
+				// 	}
+				// });
+				var cs = {
+					'payAmt': this.total,
+					'payProjectId': '2',
+					'factorycode': 'Z007',
+					'rechargeType': '1',
+					'recharge_idserial': ''
+				}
+				console.log(cs)
+				//  createOrder(cs).then(res=>{
+				// 	console.log("22222",res)
+				// })
+				uni.request({
+					url: 'http://pay.cqwu.edu.cn/scardRechargeCreateOrder',
+					method: "POST",
+					header: {
+						"Referer": " http://pay.cqwu.edu.cn",
+						"Content-Type": "application/x-www-form-urlencoded"
+
+					},
+					data: qs.stringify(cs),
+					success: (res) => {
+						console.log("res", res.data)
+						if(res.data.returncode=="ERROR"){
+							this.$refs.uNotify.error(res.data.returnmsg)
+							return
 						}
-						console.log(cs)
-						//  createOrder(cs).then(res=>{
-						// 	console.log("22222",res)
-						// })
-						uni.request({
-							url: 'http://pay.cqwu.edu.cn/scardRechargeCreateOrder',
-							method: "POST",
-							header: {
-								"Referer": " http://pay.cqwu.edu.cn",
-								"Content-Type": "application/x-www-form-urlencoded"
-						
-							},
-							data: qs.stringify(cs),
-							success: (res) => {
-								// console.log("res", res.data)
-						
-								var tx = {
-									'paytype': '03',
-									'tradetype': 'WAP',
-									// 'payways': '0203',
-									// 'userip': '123.147.249.205',
-									// 'contextPath': '',
-									'orderno': res.data['payOrderTrade']['orderno'],
-									// 'orderamt': "2.00",
-									// 'mess': ''
-								}
-								console.log("参数", qs.stringify(tx))
-								
+
+						var tx = {
+							'paytype': '03',
+							'tradetype': 'WAP',
+							// 'payways': '0203',
+							// 'userip': '123.147.249.205',
+							// 'contextPath': '',
+							'orderno': res.data['payOrderTrade']['orderno'],
+							// 'orderamt': "2.00",
+							// 'mess': ''
+						}
+						console.log("参数", qs.stringify(tx))
+
 						uni.request({
 							url: 'http://pay.cqwu.edu.cn/h5onlinepay',
 							method: "POST",
@@ -127,7 +148,7 @@
 							},
 							data: qs.stringify(tx),
 							success: (res) => {
-								console.log(res.data)
+								// console.log(res.data)
 								var box = 'deeplink : "w(.*?)"';
 								this.show = false
 								console.log("w" + res.data.match(box)[
@@ -138,8 +159,9 @@
 
 							}
 						});
-					
-			}})
+
+					}
+				})
 
 
 
@@ -147,103 +169,115 @@
 
 			},
 			tc() {
-				
-						// console.log("dyl")
-						uni.redirectTo({
-							url: 'pages/login/login'
-						});
-					},
+				// console.log(this.$http.get)
+				// plus.navigator.getSignature();
+				plus.navigator.removeAllCookie();
+				plus.navigator.removeSessionCookie();
+
+				// plus.device.getInfo({
+				// 	success:function(e){
+				// 		console.log('getDeviceInfo success: '+JSON.stringify(e));
+				// 	},
+				// 	fail:function(e){
+				// 		console.log('getDeviceInfo failed: '+JSON.stringify(e));
+				// 	}
+				// });
+				uni.redirectTo({
+					url: 'pages/login/login'
+				});
+			},
 
 
-					yue() {
-						balance().then(res => {
-							console.log("yu", res)
+			yue() {
+				balance().then(res => {
+					// console.log("yu", res)
 
-							var box = '<div class="weui-cell__ft">(.*?)</div>';
-							var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
-							var box3 = '<div class="weui-cell__ft">2(.*?)</div>';
+					var box = '<div class="weui-cell__ft">(.*?)</div>';
+					var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
+					var box3 = '<div class="weui-cell__ft">2(.*?)</div>';
 
-							// console.log("kkk", str.match(box)[1]); //4
-							if (res.match(box) == null) {
+					// console.log("kkk", str.match(box)[1]); //4
+					if (res.match(box) == null) {
 
-								if (this.flag) {
-									a = uni.getStorageSync('id')
-									b = uni.getStorageSync('pwd')
-									submit(a, b)
-								} else {
-									this.$refs.uNotify.error('身份过期~')
-									console.log("sfgq", res.match(box))
-									uni.redirectTo({
-										url: 'pages/login/login'
-									});
-									return new Promise(() => {})
-								}
+						this.yue()
+						// if (this.flag) {
+						// 	a = uni.getStorageSync('id')
+						// 	b = uni.getStorageSync('pwd')
+						// 	submit(a, b)
+						// } else {
+						// 	this.$refs.uNotify.error('身份过期~')
+						// 	console.log("sfgq", res.match(box))
+						// 	uni.redirectTo({
+						// 		url: 'pages/login/login'
+						// 	});
+						// 	return new Promise(() => {})
+						// }
 
-							} else {
-								this.name = res.match(box)[1]
-								this.money = res.match(box2)[1]
-								this.nub = "2" + res.match(box3)[1]
-							}
+					} else {
+						this.name = res.match(box)[1]
+						this.money = res.match(box2)[1]
+						this.nub = "2" + res.match(box3)[1]
+					}
 
-						})
-
-
-					},
-					async ewm() {
-							await qrcode().then(res => {
-								console.log(res)
-								var str1 = res;
-								console.log("ewm", str1)
-								var box = '<input type="hidden" id="myText" value="(.*?)" /';
-								// var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
-								// console.log(str.match(box)[1]); //4
-								if (str1.match(box) == null) {
-
-									if (this.flag) {
-										a = uni.getStorageSync('id')
-										b = uni.getStorageSync('pwd')
-										submit(a, b)
-									} else {
-										this.$refs.uNotify.error('身份过~')
-
-										uni.redirectTo({
-											url: 'pages/login/login'
-										});
-										return new Promise(() => {})
-									}
-
-								} else {
-									var qcode = str1.match(box)[1]
-									this.qrFun(qcode)
-								}
+				})
 
 
+			},
+			async ewm() {
+				await qrcode().then(res => {
+					// console.log(res)
+					var str1 = res;
+					// console.log("ewm", str1)
+					var box = '<input type="hidden" id="myText" value="(.*?)" /';
+					// var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
+					// console.log(str.match(box)[1]); //4
+					if (str1.match(box) == null) {
+						this.ewm()
+						// if (this.flag) {
+						// 	a = uni.getStorageSync('id')
+						// 	b = uni.getStorageSync('pwd')
+						// 	submit(a, b)
+						// } else {
+						// 	this.$refs.uNotify.error('身份过期~')
 
-							})
+						// uni.redirectTo({
+						// 	url: 'pages/login/login'
+						// });
+						// return new Promise(() => {})
+						// }
 
-						},
-						sx() {
+					} else {
+						var qcode = str1.match(box)[1]
+						this.qrFun(qcode)
+					}
 
-							this.ewm()
-							this.yue()
-						},
-						qrFun: function(text) {
-							this.qrShow = true
-							uQRCode.make({
-								canvasId: 'qrcode',
-								componentInstance: this,
-								text: text,
-								size: 300,
-								margin: 0,
-								backgroundColor: '#ffffff',
-								foregroundColor: '#000000',
-								fileType: 'jpg',
-								errorCorrectLevel: uQRCode.errorCorrectLevel.H,
-								success: res => {}
-							})
-						}
+
+
+				})
+
+			},
+			sx() {
+
+				this.ewm()
+				this.yue()
+			},
+			qrFun: function(text) {
+				this.qrShow = true
+				uQRCode.make({
+					canvasId: 'qrcode',
+					componentInstance: this,
+					text: text,
+					size: 300,
+					margin: 0,
+					backgroundColor: '#ffffff',
+					foregroundColor: '#000000',
+					fileType: 'jpg',
+					errorCorrectLevel: uQRCode.errorCorrectLevel.H,
+					success: res => {}
+				})
 			}
 		}
+	}
 </script>
 
 <style scoped>

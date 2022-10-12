@@ -19,8 +19,9 @@ export function gethtml() {
 export function getlogin(data) {
 	return axios.post(
 		'authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fehall.cqwu.edu.cn%2Flogin%3Fservice%3Dhttp%3A%2F%2Fehall.cqwu.edu.cn%2Fnew%2Findex.html',
-		{ showLoading: true },
-		data
+	
+		qs.stringify(data)
+			// { showLoading: true }
 
 	)
 }
@@ -34,11 +35,11 @@ export function zfc() {
 	)
 }
 export function yzm(data) {
-	return axios.get(
+	return axios.post(
 
-		'http://authserver.cqwu.edu.cn/authserver/needCaptcha.html',
-		{ showLoading: true },
-		data
+		'authserver.cqwu.edu.cn/authserver/needCaptcha.html',
+		qs.stringify(data)
+		
 	)
 }
 export function balance() {

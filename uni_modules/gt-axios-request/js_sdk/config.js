@@ -20,6 +20,7 @@ axios.defaults.adapter = function(config) {
 	return new Promise((resolve, reject) => {
 		var settle = require('../node_modules/axios/lib/core/settle')
 		var buildURL = require('../node_modules/axios/lib/helpers/buildURL')
+		// console.log("config.headers",config.headers)
 		uni.request({
 			method: config.method.toUpperCase(),
 			url: config.baseURL + buildURL(config.url, config.params, config.paramsSerializer),

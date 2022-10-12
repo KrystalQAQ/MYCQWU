@@ -1,6 +1,8 @@
 <template>
 	<view>
 		<h1>登录</h1>
+
+
 		<u-loading-icon :show="show" text="加载中" textSize="18"></u-loading-icon>
 		<u-notify ref="uNotify" message="Hi uView"></u-notify>
 		账号：
@@ -8,12 +10,12 @@
 		密码：
 		<u--input @change="change2" placeholder="请输入密码" border="surround" v-model="pwd" password></u--input>
 		<view v-show="yz" id="tp">
-			验证码:		<u--input  placeholder="请输入验证码" border="surround" v-model="captchaResponse" ></u--input><image  :src="yztp"></image>
+			验证码: <u--input placeholder="请输入验证码" border="surround" v-model="captchaResponse"></u--input>
+			<image :src="yztp"></image>
 		</view>
-		<span>自动登录</span>
+		<span>记住密码</span>
 		<u-switch v-model="name" @change="change"></u-switch>
 		<u-button @click="ty1()" type="primary" text="登录"></u-button>
-		<!-- <button @click="submit()">登录</button> -->
 	</view>
 </template>
 
@@ -32,10 +34,10 @@
 	export default {
 		data() {
 			return {
-				captchaResponse:'',
+				captchaResponse: '',
 				yz: false,
-				id: "201958304084",
-				pwd: "Krystal1024",
+				id: "",
+				pwd: "",
 				name: false,
 				show: false,
 				lt: '',
@@ -50,31 +52,71 @@
 		},
 		onReady() {
 
+			if (uni.getStorageSync("jzmm")) {
+				this.name = uni.getStorageSync("jzmm")
+				this.id = uni.getStorageSync("id")
+				this.pwd = uni.getStorageSync("pwd")
+				var cs = {
+					'username': this.id,
+					'pwdEncrypt2': "pwdEncrypt",
+					'-': Date.now()
+				}
+				yzm(cs).then(res => {
+					this.yz = res
+				})
+			}
+
 		},
 		watch: {
-			// 被侦听的变量count
+
 			yz() {
-				// console.log('count 发生了变化');
+
 				if (this.yz == true) {
 					this.yztp = "http://authserver.cqwu.edu.cn/authserver/captcha.html?ts=" + new Date().getMilliseconds()
+
 				}
 			}
 		},
 		methods: {
-			change2() {
-				yzm({
+			async change2() {
+
+				var cs = {
 					'username': this.id,
-					'pwdEncrypt2': "pwdEncrypt2",
+					'pwdEncrypt2': "pwdEncrypt",
 					'-': Date.now()
-				}).then(res => {
-					this.yz = res.data
+				}
+				console.log(cs)
+				await yzm(cs).then(res => {
+					console.log("yz", res)
+					this.yz = res
 
 				})
 			},
 			async ty1() {
+				console.log(this.pwd, this.id)
+				if (this.id == "") {
+					this.$refs.uNotify.error('用户名不能为空')
+					return
+				}
+				if (this.pwd == "") {
+					this.$refs.uNotify.error('密码不能为空')
+					return
+				}
+				if (uni.getStorageSync("jzmm")) {
+					// this.name = uni.getStorageSync("jzmm")
+					uni.setStorageSync("id", this.id)
+
+					uni.setStorageSync("pwd", this.pwd)
+
+				}
 				this.show = true
+				await getlogin().then(res => {
+
+
+
+				})
 				await gethtml().then(res => {
-					console.log("已经登录",res)
+
 					if (res.indexOf('个人中心') != "-1") {
 						console.log("已经登录")
 						this.show = false
@@ -91,24 +133,15 @@
 					var box4 = '<input type="hidden" name="_eventId" value="(.*?)"/>';
 					var box5 = '<input type="hidden" name="rmShown" value="(.*?)">';
 					var box6 = 'var pwdDefaultEncryptSalt = "(.*?)";';
-					// console.log("ty",res.header)
-					this.lt = res.data.match(box)[1]
-					this.dllt = res.data.match(box2)[1]
-					this.execution = res.data.match(box3)[1]
-					this._eventId = res.data.match(box4)[1]
-					this.rmShown = res.data.match(box5)[1]
-					var pwdDefaultEncryptSalt = res.data.match(box6)[1]
+
+					this.lt = res.match(box)[1]
+					this.dllt = res.match(box2)[1]
+					this.execution = res.match(box3)[1]
+					this._eventId = res.match(box4)[1]
+					this.rmShown = res.match(box5)[1]
+					var pwdDefaultEncryptSalt = res.match(box6)[1]
 					this.pd = encryptAES(this.pwd, pwdDefaultEncryptSalt)
-					// var cs = {
-					// 	'username': this.id,
-					// 	'password': pd,
-					// 	'lt': lt,
-					// 	"dllt": dllt,
-					// 	"execution": execution,
-					// 	"_eventId": _eventId,
-					// 	"rmShown": rmShown
-					// }
-					// console.log(cs)
+
 
 				})
 				var cs = {
@@ -119,12 +152,12 @@
 					"execution": this.execution,
 					"_eventId": this._eventId,
 					"rmShown": this.rmShown,
-					"captchaResponse":this.captchaResponse
+					"captchaResponse": this.captchaResponse
 				}
-				console.log("", cs)
+
 				await getlogin(cs).then(res => {
-					// console.log("eee", res.data)
-					if (res.data.indexOf('您提供的用户名或者密码有误') != "-1") {
+					// console.log("eee", res)
+					if (res.indexOf('您提供的用户名或者密码有误') != "-1") {
 						console.log("您提供的用户名或者密码有误")
 						this.show = false
 						this.$refs.uNotify.error('您提供的用户名或者密码有误')
@@ -133,18 +166,15 @@
 
 				})
 				await zfc().then(res => {
-					// console.log("eeeee", res.data)
-					this.show = false
-					if (res.data.indexOf('请输入密码') != "-1") {
 
-						this.show = false
-						this.$refs.uNotify.error('登录失败')
+					this.show = false
+
+					if (res.indexOf('验证码') != "-1") {
+						this.$refs.uNotify.error('请输入验证码')
 						return new Promise(() => {})
 					} else {
 						this.$refs.uNotify.primary('登录成功')
-						console.log("已经登录")
-						// uni.setStorageSync("cookie", res.data.body[0][1])
-						 // this.sleep(2000)
+
 						uni.redirectTo({
 							url: 'pages/index/index'
 						});
@@ -154,15 +184,15 @@
 				// console.log(res)
 			},
 			sleep(n) {
-			        var start = new Date().getTime();
-			        //  console.log('休眠前：' + start);
-			        while (true) {
-			            if (new Date().getTime() - start > n) {
-			                break;
-			            }
-			        }
-			        // console.log('休眠后：' + new Date().getTime());
-			    },
+				var start = new Date().getTime();
+				//  console.log('休眠前：' + start);
+				while (true) {
+					if (new Date().getTime() - start > n) {
+						break;
+					}
+				}
+				// console.log('休眠后：' + new Date().getTime());
+			},
 			ty() {
 				this.show = true
 				uni.request({
@@ -232,6 +262,12 @@
 			change(e) {
 				// this.name = !this.name
 				console.log('change', e);
+				uni.setStorageSync("jzmm", e)
+				if (this.name) {
+					uni.setStorageSync("id", this.id)
+
+					uni.setStorageSync("pwd", this.pwd)
+				}
 			},
 			async submit() {
 				this.show = true
@@ -282,8 +318,10 @@
 		flex-direction: row;
 		justify-content: space-between;
 	}
-	#tp image{
-		    width: 87px;
-		    height: 34px;
+
+	#tp image {
+		width: 87px;
+		height: 34px;
 	}
+
 </style>

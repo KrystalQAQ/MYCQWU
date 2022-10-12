@@ -16,7 +16,8 @@
 				"navigationBarTitleText": "登录"
 			}
 		}
-	],
+	
+    ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
