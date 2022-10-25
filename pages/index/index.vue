@@ -3,19 +3,23 @@
 		<u-loading-icon :show="show" text="加载中" textSize="18"></u-loading-icon>
 		<u-notify ref="uNotify" message="Hi uView"></u-notify>
 		<view class="text-area">
-			<h1>
+			<h1 v-show="ty">
 				姓名:<text>{{name}}</text>
 			</h1>
 			</br>
-			<h1>
+			<h1 @click="showname()">
 				学号:<text>{{nub}}</text>
 			</h1>
 			</br>
 			<h1>
-				余额:<text>{{money}}</text>
+				余额:<text>{{money}} ￥</text>
+			</h1>
+			</br>
+			<h1>
+				{{month}}月:<text>{{by}} ￥</text>
 			</h1>
 		</view>
-		<div class="qrcode">
+		<div class="qrcode" @click="tp()">
 			<canvas canvas-id="qrcode" />
 		</div>
 		<view class="but">
@@ -28,9 +32,11 @@
 			<!-- <h3>金额：</h3> -->
 			<u--input placeholder="请输入充值的金额" border="surround" v-model="total" :value='total'></u--input>
 			<button @click="cz()">充值</button>
-
+			<u-line-progress :percentage="jy" activeColor="#ff0000" height="15"></u-line-progress>
 
 		</view>
+
+
 	</view>
 </template>
 
@@ -51,6 +57,9 @@
 	export default {
 		data() {
 			return {
+				by: "0",
+				show2: false,
+				jy: "",
 				total: '',
 				nub: "",
 				flag: '',
@@ -60,11 +69,31 @@
 				money: '',
 				cookie: '',
 				show: false,
-
-				czz: ''
+				ty: false,
+				czz: '',
+				month: ""
 			}
 		},
 		onReady() {
+
+			var date = new Date();
+			var month = date.getMonth() + 1; // 月
+			var day = date.getDate(); // 日
+			if (!uni.getStorageSync("month")) {
+				uni.setStorageSync("month", month)
+			}
+			if (!uni.getStorageSync("q")) {
+				uni.setStorageSync("q", "0")
+			}
+			if (!uni.getStorageSync("sc")) {
+				uni.setStorageSync("sc", "0")
+			}
+			if (month > uni.getStorageSync("month")) {
+				uni.setStorageSync("q", "0")
+			}
+			this.month = month
+			this.by = uni.getStorageSync("q", "0")
+			this.jy = parseInt((31 - day) / 31 * 100)
 			getlogin().then(res => {
 				// console.log("eee", res)
 				if (res.indexOf('您还可以使用以下方式登录') != "-1") {
@@ -75,31 +104,62 @@
 						url: 'pages/login/login'
 					});
 
-				}else{
+				} else {
 					this.ewm()
 					this.yue()
 				}
 				// 	// return new Promise(() => {})
 
 			})
-	
+
 		},
 		methods: {
+			showname() {
+				this.ty = !this.ty
+			},
+			open() {
+				// console.log('open');
+			},
+			close() {
+				this.show2 = false
+				// console.log('close');
+			},
+			tj(a, b) {
+
+				if (a < b) {
+
+					var now = uni.getStorageSync("q")
+		
+		
+					var c=this.numSub(b,a)
+					var z=this.numAdd(c,now)
+			
+					uni.setStorageSync("q", z)
+					this.by = uni.getStorageSync("q")
+					uni.setStorageSync("sc", a)
+				}
+
+			},
 			cz() {
+				this.show2 = true
+				var tty = true;
+				uni.request({
+					url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
 
-				// uni.request({
-				// 	url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
-
-				// 	method: "GET",
-				// 	// header: {
-				// 	// 	"Content-Type": "application/x-www-form-urlencoded",
-				// 	// 	"Referer": " http://pay.cqwu.edu.cn",
-				// 	// },
-				// 	// data: qs.stringify(tx),
-				// 	success: (res) => {
-				// 		// console.log("yanz", res.data)
-				// 	}
-				// });
+					method: "GET",
+					// header: {
+					// 	"Content-Type": "application/x-www-form-urlencoded",
+					// 	"Referer": " http://pay.cqwu.edu.cn",
+					// },
+					// data: qs.stringify(tx),
+					success: (res) => {
+						console.log("yanz", res.data)
+						if (res.data.indexOf('登录') != "-1") {
+							// this.cz()
+							tty = true
+						}
+					}
+				});
 				var cs = {
 					'payAmt': this.total,
 					'payProjectId': '2',
@@ -107,7 +167,7 @@
 					'rechargeType': '1',
 					'recharge_idserial': ''
 				}
-				console.log(cs)
+				// console.log(cs)
 				//  createOrder(cs).then(res=>{
 				// 	console.log("22222",res)
 				// })
@@ -121,8 +181,8 @@
 					},
 					data: qs.stringify(cs),
 					success: (res) => {
-						console.log("res", res.data)
-						if(res.data.returncode=="ERROR"){
+						// console.log("res2", res.data)
+						if (res.data.returncode == "ERROR") {
 							this.$refs.uNotify.error(res.data.returnmsg)
 							return
 						}
@@ -137,7 +197,7 @@
 							// 'orderamt': "2.00",
 							// 'mess': ''
 						}
-						console.log("参数", qs.stringify(tx))
+						// console.log("参数", qs.stringify(tx))
 
 						uni.request({
 							url: 'http://pay.cqwu.edu.cn/h5onlinepay',
@@ -148,7 +208,7 @@
 							},
 							data: qs.stringify(tx),
 							success: (res) => {
-								// console.log(res.data)
+								// console.log("333",res.data)
 								var box = 'deeplink : "w(.*?)"';
 								this.show = false
 								console.log("w" + res.data.match(box)[
@@ -163,7 +223,9 @@
 					}
 				})
 
-
+				if (tty) {
+					// this.cz()
+				}
 
 
 
@@ -173,6 +235,8 @@
 				// plus.navigator.getSignature();
 				plus.navigator.removeAllCookie();
 				plus.navigator.removeSessionCookie();
+				// uni.removeStorageSync('q');
+				// uni.removeStorageSync('sc');
 
 				// plus.device.getInfo({
 				// 	success:function(e){
@@ -186,8 +250,41 @@
 					url: 'pages/login/login'
 				});
 			},
-
-
+			tp() {
+				this.ewm()
+			},
+			numAdd(num1, num2) {
+				var baseNum, baseNum1, baseNum2;
+				try {
+					baseNum1 = num1.toString().split(".")[1].length;
+				} catch (e) {
+					baseNum1 = 0;
+				}
+				try {
+					baseNum2 = num2.toString().split(".")[1].length;
+				} catch (e) {
+					baseNum2 = 0;
+				}
+				baseNum = Math.pow(10, Math.max(baseNum1, baseNum2));
+				return (num1 * baseNum + num2 * baseNum) / baseNum;
+			},
+			numSub(num1, num2) {
+				var baseNum, baseNum1, baseNum2;
+				var precision; // 精度
+				try {
+					baseNum1 = num1.toString().split(".")[1].length;
+				} catch (e) {
+					baseNum1 = 0;
+				}
+				try {
+					baseNum2 = num2.toString().split(".")[1].length;
+				} catch (e) {
+					baseNum2 = 0;
+				}
+				baseNum = Math.pow(10, Math.max(baseNum1, baseNum2));
+				precision = (baseNum1 >= baseNum2) ? baseNum1 : baseNum2;
+				return ((num1 * baseNum - num2 * baseNum) / baseNum).toFixed(precision);
+			},
 			yue() {
 				balance().then(res => {
 					// console.log("yu", res)
@@ -216,13 +313,19 @@
 					} else {
 						this.name = res.match(box)[1]
 						this.money = res.match(box2)[1]
+
 						this.nub = "2" + res.match(box3)[1]
+						if (uni.getStorageSync("sc") == "0") {
+							uni.setStorageSync("sc", this.money)
+						}
+						this.tj(this.money, uni.getStorageSync("sc"))
 					}
 
 				})
 
 
 			},
+
 			async ewm() {
 				await qrcode().then(res => {
 					// console.log(res)

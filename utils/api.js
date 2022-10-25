@@ -20,7 +20,8 @@ export function getlogin(data) {
 	return axios.post(
 		'authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fehall.cqwu.edu.cn%2Flogin%3Fservice%3Dhttp%3A%2F%2Fehall.cqwu.edu.cn%2Fnew%2Findex.html',
 	
-		qs.stringify(data)
+		qs.stringify(data),
+		// { cache: true, expires: 1000 * 60 * 60 }
 			// { showLoading: true }
 
 	)
@@ -29,7 +30,8 @@ export function zfc() {
 	return axios.get(
 
 		'authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
-		{ showLoading: true }
+		
+		// { cache: true, expires: 1000 * 60 * 60 }
 
 
 	)

@@ -111,7 +111,7 @@
 				}
 				this.show = true
 				await getlogin().then(res => {
-
+				
 
 
 				})
@@ -152,11 +152,12 @@
 					"execution": this.execution,
 					"_eventId": this._eventId,
 					"rmShown": this.rmShown,
+					'rememberMe': 'on',
 					"captchaResponse": this.captchaResponse
 				}
 
 				await getlogin(cs).then(res => {
-					// console.log("eee", res)
+					console.log("eee", res)
 					if (res.indexOf('您提供的用户名或者密码有误') != "-1") {
 						console.log("您提供的用户名或者密码有误")
 						this.show = false
