@@ -1,13 +1,23 @@
 <script>
 	export default {
+
 		onLaunch: function() {
-			console.log('App Launch')
+
 		},
 		onShow: function() {
-			console.log('App Show')
+			// this.openSQL()
+			// this.createTable()
+			// console.log('App Show')
 		},
 		onHide: function() {
-			console.log('App Hide')
+			// console.log('App Hide')
+			// this.closeSQL()
+		},
+		methods:{
+
+	
+			// 关闭数据库
+
 		}
 	}
 </script>

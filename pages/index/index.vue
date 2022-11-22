@@ -7,17 +7,20 @@
 				姓名:<text>{{name}}</text>
 			</h1>
 			</br>
-			<h1 @click="showname()">
+			<h1 v-show="ty">
 				学号:<text>{{nub}}</text>
 			</h1>
 			</br>
-			<h1>
+			<h1 @click="showname()">
 				余额:<text>{{money}} ￥</text>
 			</h1>
 			</br>
 			<h1>
 				{{month}}月:<text>{{by}} ￥</text>
 			</h1>
+			<h3 v-show="ty">
+				上次消费:<text>{{sc}} ￥</text>
+			</h3>
 		</view>
 		<div class="qrcode" @click="tp()">
 			<canvas canvas-id="qrcode" />
@@ -25,13 +28,21 @@
 		<view class="but">
 			<button @click="tc()">退出登录</button>
 			<button @click="sx()">点击刷新</button>
-
+			<!-- 			<button @click="insertTableData(12)">增加</button>
+			<button @click="selectTableData(12)">查看</button>
+			<button @click="closeSQL">关闭</button>
+			<button @click="openSQL">打开</button>
+			<button @click="createTable">创建表</button>
+ -->
 
 		</view>
 		<view class="but2">
 			<!-- <h3>金额：</h3> -->
 			<u--input placeholder="请输入充值的金额" border="surround" v-model="total" :value='total'></u--input>
-			<button @click="cz()">充值</button>
+			<view class="but">
+				<button @click="cz()">充值</button>
+				<button @click="ck()">流水</button>
+			</view>
 			<u-line-progress :percentage="jy" activeColor="#ff0000" height="15"></u-line-progress>
 
 		</view>
@@ -57,6 +68,7 @@
 	export default {
 		data() {
 			return {
+				sc: "",
 				by: "0",
 				show2: false,
 				jy: "",
@@ -71,11 +83,16 @@
 				show: false,
 				ty: false,
 				czz: '',
-				month: ""
+				month: "",
+				dbName: 'cqwu',
+				dbPath: '_doc/cqwu.db',
+				dbTable: 'cqwu',
+				listData: []
 			}
 		},
 		onReady() {
-
+			// this.openSQL()
+			// this.createTable()
 			var date = new Date();
 			var month = date.getMonth() + 1; // 月
 			var day = date.getDate(); // 日
@@ -85,14 +102,19 @@
 			if (!uni.getStorageSync("q")) {
 				uni.setStorageSync("q", "0")
 			}
+			if (!uni.getStorageSync("scye")) {
+				uni.setStorageSync("scye", "0")
+			}
 			if (!uni.getStorageSync("sc")) {
 				uni.setStorageSync("sc", "0")
 			}
 			if (month > uni.getStorageSync("month")) {
 				uni.setStorageSync("q", "0")
+				uni.setStorageSync("month", month)
 			}
+			this.sc = uni.getStorageSync("sc")
 			this.month = month
-			this.by = uni.getStorageSync("q", "0")
+			this.by = uni.getStorageSync("q")
 			this.jy = parseInt((31 - day) / 31 * 100)
 			getlogin().then(res => {
 				// console.log("eee", res)
@@ -114,6 +136,137 @@
 
 		},
 		methods: {
+			ck() {
+				// this.selectTableData()
+				// let data=this.listData
+				uni.navigateTo({
+					url: 'pages/ls/ls',
+
+				})
+			},
+			closeSQL() {
+				let open = this.isOpen();
+				if (open) {
+					plus.sqlite.closeDatabase({ //完成数据库操作后，必须关闭数据库，否则可能会导致系统资源无法释放。
+						name: this.dbName,
+						success: (e) => {
+							// this.showToast("数据库已关闭");
+						},
+						fail: (e) => {
+							this.showToast("数据库关闭失败");
+						}
+					})
+				}
+			},
+			// 打开数据库
+			isOpen() {
+				// 数据库打开了就返回 true,否则返回 false
+				let open = plus.sqlite.isOpenDatabase({
+					name: this.dbName, // 数据库名称
+					path: this.dbPath // 数据库地址
+				})
+				console.log("22", open)
+				return open;
+			},
+
+			createTable() {
+				let open = this.isOpen();
+				if (open) {
+					let sql =
+						'"id" INTEGER PRIMARY KEY AUTOINCREMENT,"content" text,"time" text';
+					plus.sqlite.executeSql({ //executeSql 执行增删改等操作的SQL语句
+						name: this.dbName,
+						sql: `CREATE TABLE IF NOT EXISTS ${this.dbTable}(${sql})`,
+						success: (e) => {
+							// console.log(e)
+							// this.showToast("创建表成功");
+						},
+						fail: (e) => {
+							console.log(e)
+							this.showToast("创建表失败");
+						}
+					})
+				} else {
+					// this.showToast("数据库未打开");
+				}
+			},
+
+			// 新增表数据
+			insertTableData(value3) {
+
+				let open = this.isOpen();
+				if (open) {
+
+
+
+
+					let time = this.formatDate(new Date().getTime());
+					let data = `'${value3}','${time}'`;
+					let condition = "'content','time'";
+					let sql = `INSERT INTO ${this.dbTable} (${condition}) VALUES(${data})`;
+					plus.sqlite.executeSql({
+						name: this.dbName,
+						sql: sql,
+						success: (e) => {
+							this.showToast("新增数据成功");
+							// this.selectTableData();
+							this.closeSQL();
+						},
+						fail: (e) => {
+							console.log(e)
+							this.showToast("新增数据失败");
+						}
+					})
+
+
+				} else {
+					this.showToast("数据库未打开");
+				}
+			},
+			// 查询表数据
+
+			// 修改表数据
+
+			// 删除表数据
+
+			// 提示框
+			showToast: function(str) {
+				uni.showToast({
+					icon: "none",
+					title: str,
+					mask: true,
+					position: 'bottom'
+				});
+			},
+			// 时间戳转年月日
+			formatDate(data) {
+				let now = new Date(data);
+				var year = now.getFullYear(); //取得4位数的年份
+				var month =
+					now.getMonth() + 1 < 10 ?
+					"0" + (now.getMonth() + 1) :
+					now.getMonth() + 1;
+				var date = now.getDate() < 10 ? "0" + now.getDate() : now.getDate();
+				var hour = now.getHours() < 10 ? "0" + now.getHours() : now.getHours();
+				var minute =
+					now.getMinutes() < 10 ? "0" + now.getMinutes() : now.getMinutes();
+				var second =
+					now.getSeconds() < 10 ? "0" + now.getSeconds() : now.getSeconds();
+				return (
+					year +
+					"-" +
+					month +
+					"-" +
+					date +
+					" " +
+					hour +
+					":" +
+					minute +
+					":" +
+					second
+				);
+			},
+
 			showname() {
 				this.ty = !this.ty
 			},
@@ -126,25 +279,47 @@
 			},
 			tj(a, b) {
 
-				if (a < b) {
 
-					var now = uni.getStorageSync("q")
-		
-		
-					var c=this.numSub(b,a)
-					var z=this.numAdd(c,now)
-			
-					uni.setStorageSync("q", z)
-					this.by = uni.getStorageSync("q")
-					uni.setStorageSync("sc", a)
+
+				var now = uni.getStorageSync("q")
+
+
+				var c = this.numSub(b, a)
+				var z = this.numAdd(c, now)
+
+				uni.setStorageSync("q", z)
+				this.by = uni.getStorageSync("q")
+				this.sc = c
+
+				uni.setStorageSync("sc", c)
+				uni.setStorageSync("scye", a)
+				this.openSQL()
+				this.createTable()
+				this.insertTableData(c)
+
+			},
+			openSQL() {
+				let open = this.isOpen(); // 查询是否打开数据库
+				if (!open) {
+					plus.sqlite.openDatabase({ //如果数据库存在则打开，不存在则创建。
+						name: this.dbName,
+						path: this.dbPath,
+						success: (e) => {
+							// this.showToast("数据库已打开");
+						},
+						fail: (e) => {
+							this.showToast("数据库开启失败");
+						}
+					})
+				} else {
+					// this.showToast("数据库已打开");
 				}
-
 			},
 			cz() {
 				this.show2 = true
 				var tty = true;
 				uni.request({
-					url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
+					url: 'http://d.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
 
 					method: "GET",
 					// header: {
@@ -315,10 +490,18 @@
 						this.money = res.match(box2)[1]
 
 						this.nub = "2" + res.match(box3)[1]
-						if (uni.getStorageSync("sc") == "0") {
-							uni.setStorageSync("sc", this.money)
+						if (uni.getStorageSync("scye") == "0") {
+							uni.setStorageSync("scye", this.money)
 						}
-						this.tj(this.money, uni.getStorageSync("sc"))
+
+						if (this.money > uni.getStorageSync("scye")) {
+							uni.setStorageSync("scye", this.money)
+						} else if (this.money < uni.getStorageSync("scye")) {
+							this.tj(this.money, uni.getStorageSync("scye"))
+						} else {
+							return
+						}
+
 					}
 
 				})
@@ -326,8 +509,8 @@
 
 			},
 
-			async ewm() {
-				await qrcode().then(res => {
+			ewm() {
+				qrcode().then(res => {
 					// console.log(res)
 					var str1 = res;
 					// console.log("ewm", str1)
