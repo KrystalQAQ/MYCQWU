@@ -91,7 +91,7 @@
 				listData: []
 			}
 		},
-		onReady() {
+		onLoad() {
 			this.ewm()
 			this.yue()
 			// this.openSQL()
@@ -124,13 +124,13 @@
 				if (res.indexOf('您还可以使用以下方式登录') != "-1") {
 					console.log("请先登录")
 					// this.show = false
-					this.$refs.uNotify.primary('请先登录~')
+					this.showToast("请先登录");
 					uni.redirectTo({
 						url: 'pages/login/login'
 					});
 
 				} else {
-				
+
 				}
 				// 	// return new Promise(() => {})
 
@@ -333,7 +333,7 @@
 					success: (res) => {
 						// console.log("yanz", )
 						if (res.statusCode == "200") {
-							this.showToast("身份认证成功，请稍后")
+							this.showToast("身份认证成功")
 							this.cjdd()
 						} else {
 							this.showToast(`身份认证失败${res.statusCode}`)
@@ -473,14 +473,14 @@
 			yue() {
 				balance().then(res => {
 					// console.log("yu", res)
-					console.log(4)
+					// console.log(4)
 					var box = '<div class="weui-cell__ft">(.*?)</div>';
 					var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
 					var box3 = '<div class="weui-cell__ft">2(.*?)</div>';
-
+					var er = res.match(box)
 					// console.log("kkk", str.match(box)[1]); //4
-					// if (res.match(box) == null) {
-
+					if (er == null) {
+						this.showToast("余额查询失败");
 						// this.yue()
 						// if (this.flag) {
 						// 	a = uni.getStorageSync('id')
@@ -495,8 +495,8 @@
 						// 	return new Promise(() => {})
 						// }
 
-					// } else {
-						this.name = res.match(box)[1]
+					} else {
+						this.name = er[1]
 						this.money = res.match(box2)[1]
 
 						this.nub = "2" + res.match(box3)[1]
@@ -512,71 +512,70 @@
 							return
 						}
 
-					// }
+					}
 
 				})
 
 
 			},
-			zfb(){	// var box = '"sign" value="(.*?)="/><input';
-						// var box2 = 'name="seller_id" value="(.*?)"';
-						// var box3 = 'name="out_trade_no" value="(.*?)"';
-						// console.log(res.data.match(box)[1]+"=")
-						// console.log(res.data.match(box2)[1])
-						// var ui={
-						// 	"_input_charset":"UTF-8",
-						// 	"subject":"校园卡充值",
-						// 	"sign":res.data.match(box)[1]+"=",
-						// 	"notify_url":"http://pay.cqwu.edu.cn/PayPreService/aliPayWapBackResNotify",
-						// 	"payment_type":"1",
-						// 	"out_trade_no":res.data.match(box3)[1],
-						// 	"partner":res.data.match(box2)[1],
-						// 	"service":"alipay.wap.create.direct.pay.by.user&total_fee=2.00",
-						// 	"app_pay":"N",
-						// 	"return_url":"http://218.194.176.207/PayPreService/aliPayWapFontResReturn",
-						// 	"sign_type":"RSA",
-						// 	"seller_id":res.data.match(box2)[1],
-							
-						// 	"show_url":"http://pay.cqwu.edu.cn/portal.html"
-						// }
-						// console.log("支付宝参数",qs.stringify(ui))
-						// uni.request({
-						// 	url: 'https://mapi.alipay.com/gateway.do?_input_charset=UTF-8',
-						// 	method: "POST",
-						// 	header: {
-						// 		"Content-Type": "application/x-www-form-urlencoded",
-						// 		"origin": "http://pay.cqwu.edu.cn",
-						// 		"Referer": "http://pay.cqwu.edu.cn",
-						// 	},
-						// 	data: qs.stringify(ui),
-						// 	success: (res) => {
-						// 		console.log("222",res.data)
-						// 		// var box = 'deeplink : "w(.*?)"';
-						// 		// this.show = false
-						// 		// console.log("w" + res.data.match(box)[
-						// 		// 	1])
-						// 		// 	this.showToast("请完成支付")
-						// 		// plus.runtime.openURL("w" + res.data.match(
-						// 		// 	box)[1]);
-						
-						
-						// 	},
-						// 	fail: (res) => {
-						// 		console.log("zfb失败",res)
-						// 	}
-						// });}
-						},
+			zfb() { // var box = '"sign" value="(.*?)="/><input';
+				// var box2 = 'name="seller_id" value="(.*?)"';
+				// var box3 = 'name="out_trade_no" value="(.*?)"';
+				// console.log(res.data.match(box)[1]+"=")
+				// console.log(res.data.match(box2)[1])
+				// var ui={
+				// 	"_input_charset":"UTF-8",
+				// 	"subject":"校园卡充值",
+				// 	"sign":res.data.match(box)[1]+"=",
+				// 	"notify_url":"http://pay.cqwu.edu.cn/PayPreService/aliPayWapBackResNotify",
+				// 	"payment_type":"1",
+				// 	"out_trade_no":res.data.match(box3)[1],
+				// 	"partner":res.data.match(box2)[1],
+				// 	"service":"alipay.wap.create.direct.pay.by.user&total_fee=2.00",
+				// 	"app_pay":"N",
+				// 	"return_url":"http://218.194.176.207/PayPreService/aliPayWapFontResReturn",
+				// 	"sign_type":"RSA",
+				// 	"seller_id":res.data.match(box2)[1],
+
+				// 	"show_url":"http://pay.cqwu.edu.cn/portal.html"
+				// }
+				// console.log("支付宝参数",qs.stringify(ui))
+				// uni.request({
+				// 	url: 'https://mapi.alipay.com/gateway.do?_input_charset=UTF-8',
+				// 	method: "POST",
+				// 	header: {
+				// 		"Content-Type": "application/x-www-form-urlencoded",
+				// 		"origin": "http://pay.cqwu.edu.cn",
+				// 		"Referer": "http://pay.cqwu.edu.cn",
+				// 	},
+				// 	data: qs.stringify(ui),
+				// 	success: (res) => {
+				// 		console.log("222",res.data)
+				// 		// var box = 'deeplink : "w(.*?)"';
+				// 		// this.show = false
+				// 		// console.log("w" + res.data.match(box)[
+				// 		// 	1])
+				// 		// 	this.showToast("请完成支付")
+				// 		// plus.runtime.openURL("w" + res.data.match(
+				// 		// 	box)[1]);
+
+
+				// 	},
+				// 	fail: (res) => {
+				// 		console.log("zfb失败",res)
+				// 	}
+				// });}
+			},
 			ewm() {
 				qrcode().then(res => {
-					console.log(2)
-					// console.log(res)
 					var str1 = res;
-					// console.log("ewm", str1)
 					var box = '<input type="hidden" id="myText" value="(.*?)" /';
 					// var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
 					// console.log(str.match(box)[1]); //4
-					// if (str1.match(box) == null) {
-					// 	this.ewm()
+					var er = str1.match(box)
+					if (er == null) {
+						this.showToast("二维码刷新失败");
+						// this.ewm()
 						// if (this.flag) {
 						// 	a = uni.getStorageSync('id')
 						// 	b = uni.getStorageSync('pwd')
@@ -590,10 +589,10 @@
 						// return new Promise(() => {})
 						// }
 
-					// } else {
-						var qcode = str1.match(box)[1]
+					} else {
+						var qcode = er[1]
 						this.qrFun(qcode)
-					// }
+					}
 
 
 
