@@ -111,7 +111,7 @@
 				}
 				this.show = true
 				await getlogin().then(res => {
-				
+
 
 
 				})
@@ -121,7 +121,7 @@
 						console.log("已经登录")
 						this.show = false
 						this.$refs.uNotify.primary('登录成功')
-
+						uni.setStorageSync("tanyu", "true")
 						uni.redirectTo({
 							url: 'pages/index/index'
 						});
@@ -175,7 +175,7 @@
 						return new Promise(() => {})
 					} else {
 						this.$refs.uNotify.primary('登录成功')
-
+						uni.setStorageSync("tanyu", "true")
 						uni.redirectTo({
 							url: 'pages/index/index'
 						});
@@ -324,5 +324,4 @@
 		width: 87px;
 		height: 34px;
 	}
-
 </style>

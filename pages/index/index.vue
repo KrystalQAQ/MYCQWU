@@ -16,11 +16,11 @@
 			</h1>
 			</br>
 			<h1>
-				{{month}}月:<text>{{by}} ￥</text>
-			</h1>
-			<h3 v-show="ty">
+				本月:<text>{{by}} ￥</text>
+			</h1></br>
+			<h2>
 				上次消费:<text>{{sc}} ￥</text>
-			</h3>
+			</h2>
 		</view>
 		<div class="qrcode" @click="tp()">
 			<canvas canvas-id="qrcode" />
@@ -42,6 +42,7 @@
 			<view class="but">
 				<button @click="cz()">充值</button>
 				<button @click="ck()">流水</button>
+				<!-- <button @click="tj2()">添加</button> -->
 			</view>
 			<u-line-progress :percentage="jy" activeColor="#ff0000" height="15"></u-line-progress>
 
@@ -91,6 +92,8 @@
 			}
 		},
 		onReady() {
+			this.ewm()
+			this.yue()
 			// this.openSQL()
 			// this.createTable()
 			var date = new Date();
@@ -127,8 +130,7 @@
 					});
 
 				} else {
-					this.ewm()
-					this.yue()
+				
 				}
 				// 	// return new Promise(() => {})
 
@@ -136,6 +138,12 @@
 
 		},
 		methods: {
+			tj2() {
+				this.closeSQL()
+				this.openSQL("33")
+				// this.createTable()
+				// this.insertTableData()
+			},
 			ck() {
 				// this.selectTableData()
 				// let data=this.listData
@@ -150,6 +158,7 @@
 					plus.sqlite.closeDatabase({ //完成数据库操作后，必须关闭数据库，否则可能会导致系统资源无法释放。
 						name: this.dbName,
 						success: (e) => {
+							console.log("数据库关闭")
 							// this.showToast("数据库已关闭");
 						},
 						fail: (e) => {
@@ -165,7 +174,7 @@
 					name: this.dbName, // 数据库名称
 					path: this.dbPath // 数据库地址
 				})
-				console.log("22", open)
+				// console.log("22", open)
 				return open;
 			},
 
@@ -193,7 +202,7 @@
 
 			// 新增表数据
 			insertTableData(value3) {
-
+				console.log("value3", value3)
 				let open = this.isOpen();
 				if (open) {
 
@@ -202,12 +211,14 @@
 
 					let time = this.formatDate(new Date().getTime());
 					let data = `'${value3}','${time}'`;
+					console.log("2", data)
 					let condition = "'content','time'";
 					let sql = `INSERT INTO ${this.dbTable} (${condition}) VALUES(${data})`;
 					plus.sqlite.executeSql({
 						name: this.dbName,
 						sql: sql,
 						success: (e) => {
+
 							this.showToast("新增数据成功");
 							// this.selectTableData();
 							this.closeSQL();
@@ -223,13 +234,7 @@
 					this.showToast("数据库未打开");
 				}
 			},
-			// 查询表数据
 
-			// 修改表数据
-
-			// 删除表数据
-
-			// 提示框
 			showToast: function(str) {
 				uni.showToast({
 					icon: "none",
@@ -293,18 +298,21 @@
 
 				uni.setStorageSync("sc", c)
 				uni.setStorageSync("scye", a)
-				this.openSQL()
-				this.createTable()
-				this.insertTableData(c)
+				this.openSQL(c)
+
+				// this.insertTableData(c)
 
 			},
-			openSQL() {
+			openSQL(c) {
 				let open = this.isOpen(); // 查询是否打开数据库
 				if (!open) {
 					plus.sqlite.openDatabase({ //如果数据库存在则打开，不存在则创建。
 						name: this.dbName,
 						path: this.dbPath,
 						success: (e) => {
+							console.log("数据库打开")
+							this.createTable()
+							this.insertTableData(c)
 							// this.showToast("数据库已打开");
 						},
 						fail: (e) => {
@@ -319,22 +327,27 @@
 				this.show2 = true
 				var tty = true;
 				uni.request({
-					url: 'http://d.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
+					url: 'http://authserver.cqwu.edu.cn/authserver/login?service=http%3A%2F%2Fpay.cqwu.edu.cn%2FsignAuthentication%3Furl%3DopenPortal',
 
 					method: "GET",
-					// header: {
-					// 	"Content-Type": "application/x-www-form-urlencoded",
-					// 	"Referer": " http://pay.cqwu.edu.cn",
-					// },
-					// data: qs.stringify(tx),
 					success: (res) => {
-						console.log("yanz", res.data)
-						if (res.data.indexOf('登录') != "-1") {
-							// this.cz()
-							tty = true
+						// console.log("yanz", )
+						if (res.statusCode == "200") {
+							this.showToast("身份认证成功，请稍后")
+							this.cjdd()
+						} else {
+							this.showToast(`身份认证失败${res.statusCode}`)
 						}
+
 					}
 				});
+
+
+
+
+
+			},
+			cjdd() {
 				var cs = {
 					'payAmt': this.total,
 					'payProjectId': '2',
@@ -342,10 +355,6 @@
 					'rechargeType': '1',
 					'recharge_idserial': ''
 				}
-				// console.log(cs)
-				//  createOrder(cs).then(res=>{
-				// 	console.log("22222",res)
-				// })
 				uni.request({
 					url: 'http://pay.cqwu.edu.cn/scardRechargeCreateOrder',
 					method: "POST",
@@ -360,57 +369,58 @@
 						if (res.data.returncode == "ERROR") {
 							this.$refs.uNotify.error(res.data.returnmsg)
 							return
+						} else {
+							this.wxzf(res)
 						}
 
-						var tx = {
-							'paytype': '03',
-							'tradetype': 'WAP',
-							// 'payways': '0203',
-							// 'userip': '123.147.249.205',
-							// 'contextPath': '',
-							'orderno': res.data['payOrderTrade']['orderno'],
-							// 'orderamt': "2.00",
-							// 'mess': ''
-						}
-						// console.log("参数", qs.stringify(tx))
 
-						uni.request({
-							url: 'http://pay.cqwu.edu.cn/h5onlinepay',
-							method: "POST",
-							header: {
-								"Content-Type": "application/x-www-form-urlencoded",
-								"Referer": " http://pay.cqwu.edu.cn",
-							},
-							data: qs.stringify(tx),
-							success: (res) => {
-								// console.log("333",res.data)
-								var box = 'deeplink : "w(.*?)"';
-								this.show = false
-								console.log("w" + res.data.match(box)[
-									1])
-								plus.runtime.openURL("w" + res.data.match(
-									box)[1]);
-
-
-							}
-						});
 
 					}
 				})
-
-				if (tty) {
-					// this.cz()
+			},
+			wxzf(res) {
+				var tx = {
+					'paytype': '03',
+					'tradetype': 'WAP',
+					// 'payways': '0203',
+					// 'userip': '123.147.249.205',
+					// 'contextPath': '',
+					'orderno': res.data['payOrderTrade']['orderno'],
+					// 'orderamt': "2.00",
+					// 'mess': ''
 				}
+				// console.log("参数", qs.stringify(tx))
+
+				uni.request({
+					url: 'http://pay.cqwu.edu.cn/h5onlinepay',
+					method: "POST",
+					header: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"Referer": " http://pay.cqwu.edu.cn"
+
+					},
+					data: qs.stringify(tx),
+					success: (res) => {
+						// console.log("333",res.data)
+
+						var box = 'deeplink : "w(.*?)"';
+						this.show = false
+						console.log("w" + res.data.match(box)[
+							1])
+						this.showToast("请完成支付")
+						plus.runtime.openURL("w" + res.data.match(
+							box)[1]);
 
 
-
+					}
+				});
 			},
 			tc() {
 				// console.log(this.$http.get)
 				// plus.navigator.getSignature();
 				plus.navigator.removeAllCookie();
 				plus.navigator.removeSessionCookie();
-				// uni.removeStorageSync('q');
+				uni.removeStorageSync('tanyu');
 				// uni.removeStorageSync('sc');
 
 				// plus.device.getInfo({
@@ -463,15 +473,15 @@
 			yue() {
 				balance().then(res => {
 					// console.log("yu", res)
-
+					console.log(4)
 					var box = '<div class="weui-cell__ft">(.*?)</div>';
 					var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
 					var box3 = '<div class="weui-cell__ft">2(.*?)</div>';
 
 					// console.log("kkk", str.match(box)[1]); //4
-					if (res.match(box) == null) {
+					// if (res.match(box) == null) {
 
-						this.yue()
+						// this.yue()
 						// if (this.flag) {
 						// 	a = uni.getStorageSync('id')
 						// 	b = uni.getStorageSync('pwd')
@@ -485,7 +495,7 @@
 						// 	return new Promise(() => {})
 						// }
 
-					} else {
+					// } else {
 						this.name = res.match(box)[1]
 						this.money = res.match(box2)[1]
 
@@ -502,23 +512,71 @@
 							return
 						}
 
-					}
+					// }
 
 				})
 
 
 			},
-
+			zfb(){	// var box = '"sign" value="(.*?)="/><input';
+						// var box2 = 'name="seller_id" value="(.*?)"';
+						// var box3 = 'name="out_trade_no" value="(.*?)"';
+						// console.log(res.data.match(box)[1]+"=")
+						// console.log(res.data.match(box2)[1])
+						// var ui={
+						// 	"_input_charset":"UTF-8",
+						// 	"subject":"校园卡充值",
+						// 	"sign":res.data.match(box)[1]+"=",
+						// 	"notify_url":"http://pay.cqwu.edu.cn/PayPreService/aliPayWapBackResNotify",
+						// 	"payment_type":"1",
+						// 	"out_trade_no":res.data.match(box3)[1],
+						// 	"partner":res.data.match(box2)[1],
+						// 	"service":"alipay.wap.create.direct.pay.by.user&total_fee=2.00",
+						// 	"app_pay":"N",
+						// 	"return_url":"http://218.194.176.207/PayPreService/aliPayWapFontResReturn",
+						// 	"sign_type":"RSA",
+						// 	"seller_id":res.data.match(box2)[1],
+							
+						// 	"show_url":"http://pay.cqwu.edu.cn/portal.html"
+						// }
+						// console.log("支付宝参数",qs.stringify(ui))
+						// uni.request({
+						// 	url: 'https://mapi.alipay.com/gateway.do?_input_charset=UTF-8',
+						// 	method: "POST",
+						// 	header: {
+						// 		"Content-Type": "application/x-www-form-urlencoded",
+						// 		"origin": "http://pay.cqwu.edu.cn",
+						// 		"Referer": "http://pay.cqwu.edu.cn",
+						// 	},
+						// 	data: qs.stringify(ui),
+						// 	success: (res) => {
+						// 		console.log("222",res.data)
+						// 		// var box = 'deeplink : "w(.*?)"';
+						// 		// this.show = false
+						// 		// console.log("w" + res.data.match(box)[
+						// 		// 	1])
+						// 		// 	this.showToast("请完成支付")
+						// 		// plus.runtime.openURL("w" + res.data.match(
+						// 		// 	box)[1]);
+						
+						
+						// 	},
+						// 	fail: (res) => {
+						// 		console.log("zfb失败",res)
+						// 	}
+						// });}
+						},
 			ewm() {
 				qrcode().then(res => {
+					console.log(2)
 					// console.log(res)
 					var str1 = res;
 					// console.log("ewm", str1)
 					var box = '<input type="hidden" id="myText" value="(.*?)" /';
 					// var box2 = '<div class="weui-cell__ft">(.*?)￥</div>';
 					// console.log(str.match(box)[1]); //4
-					if (str1.match(box) == null) {
-						this.ewm()
+					// if (str1.match(box) == null) {
+					// 	this.ewm()
 						// if (this.flag) {
 						// 	a = uni.getStorageSync('id')
 						// 	b = uni.getStorageSync('pwd')
@@ -532,10 +590,10 @@
 						// return new Promise(() => {})
 						// }
 
-					} else {
+					// } else {
 						var qcode = str1.match(box)[1]
 						this.qrFun(qcode)
-					}
+					// }
 
 
 
@@ -543,9 +601,11 @@
 
 			},
 			sx() {
-
+				console.log(1)
 				this.ewm()
+				console.log(3)
 				this.yue()
+				console.log(5)
 			},
 			qrFun: function(text) {
 				this.qrShow = true

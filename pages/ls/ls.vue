@@ -11,6 +11,7 @@
 				<td class="ww">{{item.content}}元</td>
 			</tr>
 		</table>
+		<button @click="kk">一周图表</button>
 	</view>
 </template>
 
@@ -25,11 +26,21 @@
 			}
 		},
 		onLoad() {
+			this.closeSQL()
+			
 			this.openSQL()
+			
+			
 			// this.createTable()
 			// this.selectTableData()
 		},
 		methods: {
+			kk() {
+				uni.navigateTo({
+					url: 'pages/test/test',
+
+				})
+			},
 			createTable() {
 				let open = this.isOpen();
 				if (open) {
@@ -39,11 +50,11 @@
 						name: this.dbName,
 						sql: `CREATE TABLE IF NOT EXISTS ${this.dbTable}(${sql})`,
 						success: (e) => {
-							// console.log(e)
+							console.log("创建表成功",e)
 							// this.showToast("创建表成功");
 						},
 						fail: (e) => {
-							console.log(e)
+							console.log("创建表失败",e)
 							this.showToast("创建表失败");
 						}
 					})
@@ -52,13 +63,15 @@
 				}
 			},
 			openSQL() {
+
 				let open = this.isOpen(); // 查询是否打开数据库
-				this.createTable()
+				
 				if (!open) {
 					plus.sqlite.openDatabase({ //如果数据库存在则打开，不存在则创建。
 						name: this.dbName,
 						path: this.dbPath,
 						success: (e) => {
+							this.createTable()
 							this.selectTableData()
 							// this.showToast("数据库已打开");
 						},
@@ -67,7 +80,7 @@
 						}
 					})
 				} else {
-					// this.showToast("数据库已打开");
+					this.showToast("数据库已打开");
 				}
 			},
 			closeSQL() {
@@ -91,10 +104,12 @@
 					name: this.dbName, // 数据库名称
 					path: this.dbPath // 数据库地址
 				})
+				console.log("数据库状态",open)
 				return open;
 			},
 			selectTableData() {
 				let open = this.isOpen();
+				// console.log("open", open)
 				if (open) {
 					let sql = `SELECT * FROM ${this.dbTable}`;
 					plus.sqlite.selectSql({
@@ -102,11 +117,14 @@
 						sql: sql,
 						success: (e) => {
 							this.showToast("查询成功");
-							this.closeSQL()
+							console.log("查询成功",e)
 							this.tt = e;
+							this.closeSQL()
+
 						},
 						fail: (e) => {
-							console.log("查询失败")
+							console.log("查询失败",e)
+							this.closeSQL()
 							// this.showToast(e);
 
 						}
@@ -120,7 +138,7 @@
 					icon: "none",
 					title: str,
 					mask: true,
-					position:'bottom'
+					position: 'bottom'
 				});
 			},
 		}

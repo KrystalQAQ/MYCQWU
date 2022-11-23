@@ -2,7 +2,14 @@
 	export default {
 
 		onLaunch: function() {
-
+			// if(uni.getStorageSync("tanyu")=="true"){
+			// 	console.log("ty",uni.getStorageSync("tanyu"))
+			// 	uni.redirectTo({
+			// 		url: 'pages/index/index'
+			// 	});
+			// 	return
+			// }
+	
 		},
 		onShow: function() {
 			// this.openSQL()
